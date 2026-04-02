@@ -43,14 +43,19 @@ const features = [
 export default function Home() {
   return (
     <div>
+      <div className="animated-bg"></div>
+      
       {/* Hero Section */}
       <section style={{
-        padding: '100px 24px 80px',
-        textAlign: 'center',
-        maxWidth: '900px',
+        padding: '120px 24px 100px',
+        maxWidth: '1200px',
         margin: '0 auto',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '60px',
+        flexWrap: 'wrap',
       }}>
-        <div className="animate-fade-in">
+        <div className="animate-fade-in" style={{ flex: '1 1 500px' }}>
           <div style={{
             display: 'inline-block',
             padding: '8px 20px',
@@ -60,152 +65,148 @@ export default function Home() {
             fontSize: '14px',
             color: '#a5b4fc',
             marginBottom: '28px',
+            fontWeight: 600,
           }}>
-            🚀 Powered by Google Gemini AI
+            🚀 Powered by Google Gemini 1.5 Flash
           </div>
           <h1 style={{
-            fontSize: 'clamp(36px, 5vw, 64px)',
+            fontSize: 'clamp(40px, 6vw, 72px)',
             fontWeight: 900,
-            lineHeight: 1.1,
+            lineHeight: 1.05,
             marginBottom: '24px',
-            letterSpacing: '-1.5px',
+            letterSpacing: '-2px',
           }}>
-            Crack Your Board Exams <br />
-            <span className="gradient-text">With AI Superpowers</span>
+            Master Your <br />
+            Boards <span className="gradient-text">With AI</span>
           </h1>
           <p style={{
-            fontSize: '18px',
-            color: 'rgba(255,255,255,0.55)',
-            maxWidth: '600px',
-            margin: '0 auto 40px',
-            lineHeight: 1.7,
+            fontSize: '19px',
+            color: 'rgba(255,255,255,0.6)',
+            maxWidth: '540px',
+            marginBottom: '40px',
+            lineHeight: 1.6,
           }}>
-            The smartest study companion for Class 10th & 12th students. AI-powered doubts, summaries,
-            quizzes, and grading — all in one place.
+            The ultimate AI study companion for Class 10th & 12th. Get instant Hinglish doubts, chapter summaries, 3D flashcards, and automated grading.
           </p>
-          <div style={{ display: 'flex', gap: '14px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <Link href="/register">
-              <button className="btn-primary" style={{ fontSize: '16px', padding: '14px 36px' }}>
-                Start Free Prep →
-              </button>
-            </Link>
-            <Link href="/login">
-              <button className="btn-secondary" style={{ fontSize: '16px', padding: '14px 36px' }}>
-                Login
+              <button className="btn-primary" style={{ fontSize: '17px', padding: '16px 40px' }}>
+                Join 10,000+ Students →
               </button>
             </Link>
           </div>
+          
+          <div style={{ marginTop: '48px', display: 'flex', gap: '24px', alignItems: 'center' }}>
+             <div style={{ display: 'flex', marginLeft: '10px' }}>
+                {[1,2,3,4].map(i => (
+                  <div key={i} style={{ 
+                    width: '36px', height: '36px', borderRadius: '50%', background: '#1a1a2e', 
+                    border: '2px solid #0a0a1a', marginLeft: '-10px', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
+                  }}>
+                    {['👨‍🎓', '👩‍🎓', '🧑‍🎓', '👩‍💻'][i-1]}
+                  </div>
+                ))}
+             </div>
+             <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ color: '#10b981', fontWeight: 700 }}>● 274 Students</span> studying right now
+             </div>
+          </div>
+        </div>
+
+        <div className="animate-fade-in" style={{ 
+          flex: '1 1 400px', 
+          position: 'relative', 
+          animationDelay: '0.2s', 
+          animationFillMode: 'backwards' 
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '120%',
+            height: '120%',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%)',
+            zIndex: -1,
+          }}></div>
+          <img 
+            src="/hero.png" 
+            alt="AI Tutor Illustration" 
+            style={{
+              width: '100%',
+              borderRadius: '24px',
+              boxShadow: '0 20px 80px rgba(0,0,0,0.5), 0 0 40px rgba(99, 102, 241, 0.2)',
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+          />
         </div>
       </section>
+
+      {/* Features Heading */}
+      <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+        <h2 style={{ fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: 800 }}>Powerful <span className="gradient-text">Core Features</span></h2>
+        <p style={{ color: 'rgba(255,255,255,0.4)', marginTop: '10px' }}>Built for Indian students by experts in AI and Education.</p>
+      </div>
 
       {/* Features Grid */}
       <section style={{
-        padding: '20px 24px 100px',
+        padding: '0 24px 120px',
         maxWidth: '1200px',
         margin: '0 auto',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gap: '24px',
       }}>
-        <h2 style={{
-          textAlign: 'center',
-          fontSize: '32px',
-          fontWeight: 800,
-          marginBottom: '48px',
-          letterSpacing: '-0.5px',
-        }}>
-          Everything You Need to <span className="gradient-text">Score Big</span>
-        </h2>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-          gap: '20px',
-        }}>
-          {features.map((f, i) => (
-            <div
-              key={i}
-              className="glass-card animate-fade-in"
-              style={{
-                padding: '32px',
-                animationDelay: `${i * 0.1}s`,
-                animationFillMode: 'backwards',
-              }}
-            >
-              <div style={{
-                width: '52px',
-                height: '52px',
-                borderRadius: '14px',
-                background: `${f.color}22`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '26px',
-                marginBottom: '18px',
-              }}>
-                {f.icon}
-              </div>
-              <h3 style={{
-                fontSize: '19px',
-                fontWeight: 700,
-                marginBottom: '10px',
-              }}>
-                {f.title}
-              </h3>
-              <p style={{
-                color: 'rgba(255,255,255,0.5)',
-                fontSize: '15px',
-                lineHeight: 1.6,
-              }}>
-                {f.desc}
-              </p>
+        {features.map((f, i) => (
+          <div
+            key={i}
+            className="glass-card animate-fade-in"
+            style={{
+              padding: '40px',
+              animationDelay: `${i * 0.1}s`,
+              animationFillMode: 'backwards',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '20px',
+            }}
+          >
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '18px',
+              background: `linear-gradient(135deg, ${f.color}22, ${f.color}44)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '32px',
+              boxShadow: `0 8px 20px ${f.color}15`,
+            }}>
+              {f.icon}
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section style={{
-        padding: '60px 24px',
-        maxWidth: '900px',
-        margin: '0 auto',
-        textAlign: 'center',
-      }}>
-        <div className="glass-card" style={{
-          padding: '48px 32px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '32px',
-        }}>
-          {[
-            { num: '10K+', label: 'Active Students' },
-            { num: '50K+', label: 'Doubts Solved' },
-            { num: '95%', label: 'Satisfaction' },
-            { num: '100+', label: 'Chapters Covered' },
-          ].map((s, i) => (
-            <div key={i}>
-              <div className="gradient-text" style={{
-                fontSize: '36px',
-                fontWeight: 900,
-              }}>
-                {s.num}
-              </div>
-              <div style={{
-                color: 'rgba(255,255,255,0.45)',
-                fontSize: '14px',
-                marginTop: '4px',
-              }}>
-                {s.label}
-              </div>
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: 800, marginBottom: '12px' }}>{f.title}</h3>
+              <p style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, fontSize: '15px' }}>{f.desc}</p>
             </div>
-          ))}
-        </div>
+            <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+               <Link href="/register" style={{ fontSize: '13px', color: f.color, fontWeight: 700, textDecoration: 'none' }}>
+                  Explore Feature →
+               </Link>
+            </div>
+          </div>
+        ))}
       </section>
 
       {/* Footer */}
       <footer style={{
         textAlign: 'center',
-        padding: '40px 24px',
-        color: 'rgba(255,255,255,0.3)',
+        padding: '80px 24px 40px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        color: 'rgba(255,255,255,0.25)',
         fontSize: '14px',
       }}>
-        © 2026 BoardPrep AI — Built with ❤️ for Indian Students
+        <div style={{ marginBottom: '20px', fontSize: '24px' }}>🎓</div>
+        © 2026 BoardPrep AI — Built for Indian Students 🇮🇳
       </footer>
     </div>
   );

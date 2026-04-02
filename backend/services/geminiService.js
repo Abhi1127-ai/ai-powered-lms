@@ -4,13 +4,32 @@ let genAI = null;
 let model = null;
 
 const initGemini = () => {
-  if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'your_google_gemini_api_key_here') {
+  const rawKey = process.env.GEMINI_API_KEY || '';
+  const key = rawKey.trim(); // Trim hidden spaces/newlines
+
+  if (!key || key === 'your_google_gemini_api_key_here') {
     console.warn('⚠️  GEMINI_API_KEY not set — AI features will return mock responses.');
     return false;
   }
-  genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  genAI = new GoogleGenerativeAI(key);
   model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
   return true;
+};
+
+const verifyGemini = async () => {
+  if (!model) return false;
+  try {
+    // Quick test to see if the key works
+    await model.generateContent('test');
+    console.log('✅ Gemini AI Verified & Ready');
+    return true;
+  } catch (error) {
+    console.error('❌ Gemini AI Error:', error.message);
+    if (error.message.includes('404')) {
+      console.error('👉 TIP: Your API Key might be invalid or restricted. Get a new one at aistudio.google.com');
+    }
+    return false;
+  }
 };
 
 // ── Doubt Destroyer (Hinglish) ─────────────────────────────────────────
@@ -125,7 +144,95 @@ Return your response in this JSON format:
   return getMockGradeResponse(question, maxMarks);
 };
 
+// ── AI Study Plan Generator ───────────────────────────────────────────
+const generateStudyPlan = async (userClass, board, currentProgress) => {
+  if (!model) return getMockStudyPlanResponse();
+
+  const progressJson = JSON.stringify(currentProgress);
+  const prompt = `You are a strategic Board Exam coach for Class ${userClass} (${board} Board).
+  The student's current progress across subjects is: ${progressJson} (values are 0-100%).
+
+  Your goal is to create a dynamic study plan for TODAY that focuses on improving weak areas while maintaining strong ones.
+
+  Return ONLY a valid JSON object with this exact format:
+  {
+    "dailyMantra": "A short, motivating 1-sentence quote for the day",
+    "goals": [
+      {
+        "subject": "...",
+        "chapter": "Suggest a specific chapter from their weak subjects",
+        "task": "A concrete task (e.g., 'Solve 5 numericals', 'Revise organic equations')",
+        "priority": "High" or "Medium",
+        "why": "Briefly explain why this topic is important for boards"
+      }
+    ],
+    "proTip": "One advanced exam strategy for today"
+  }
+
+  Focus on suggesting 3 high-impact goals. Choose subjects with lower progress.`;
+
+  const result = await model.generateContent(prompt);
+  let text = result.response.text();
+
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      return getMockStudyPlanResponse();
+    }
+  }
+  return getMockStudyPlanResponse();
+};
+
+// ── AI Flashcard Generator ────────────────────────────────────────────
+const generateFlashcards = async (topic, subject, count = 10) => {
+  if (!model) return getMockFlashcardResponse(topic, subject, count);
+
+  const prompt = `Generate exactly ${count} flashcards for the topic "${topic}" in ${subject} for Indian Board Exams.
+  Each flashcard should have a "front" (question/term) and a "back" (concise answer/explanation).
+
+  Return ONLY a valid JSON array in this exact format, with no other text:
+  [
+    {
+      "front": "...",
+      "back": "..."
+    }
+  ]
+
+  Make them high-yield for board exams. Include definitions, formulas, and key dates/names.`;
+
+  const result = await model.generateContent(prompt);
+  let text = result.response.text();
+
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      return getMockFlashcardResponse(topic, subject, count);
+    }
+  }
+  return getMockFlashcardResponse(topic, subject, count);
+};
+
 // ── Mock Responses (when API key not set) ──────────────────────────────
+const getMockFlashcardResponse = (topic, subject, count) =>
+  Array.from({ length: count }, (_, i) => ({
+    front: `Concept ${i + 1} of ${topic} (${subject})?`,
+    back: `This is the concise explanation for concept ${i + 1}. Set GEMINI_API_KEY for real flashcards.`
+  }));
+
+const getMockStudyPlanResponse = () => ({
+  dailyMantra: "Consistency is the bridge between goals and accomplishment.",
+  goals: [
+    { subject: "Physics", chapter: "Electric Charges", task: "Solve 5 previous year numericals", priority: "High", why: "Weightage of 7-9 marks in boards." },
+    { subject: "Chemistry", chapter: "Solutions", task: "Memorize Raoult's Law and its derivation", priority: "Medium", why: "Frequently asked in short answers." },
+    { subject: "Mathematics", chapter: "Matrices", task: "Practice 3x3 inverse matrix problems", priority: "High", why: "Foundation for linear equations section." }
+  ],
+  proTip: "Use the Pomodoro technique: 25 mins study, 5 mins break to keep your mind fresh."
+});
+
 const getMockDoubtResponse = (question, subject) =>
   `🤖 **Mock AI Response** (set GEMINI_API_KEY for real answers)\n\nAapka doubt "${question}" ${subject} mein bahut common hai!\n\n**Simple Answer:** Yeh ek important concept hai jo board exam mein zaroor aata hai.\n\n**Detail:** Is topic ko samajhne ke liye, pehle basics clear karo, phir practice karo.\n\n💡 **Board Tip:** Diagrams draw karo aur formulas yaad rakho!`;
 
@@ -149,4 +256,4 @@ const getMockGradeResponse = (question, maxMarks) => ({
   tips: 'Practice writing structured answers with proper headings.',
 });
 
-module.exports = { initGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer };
+module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards };

@@ -2,15 +2,26 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const { initGemini } = require('./services/geminiService');
-console.log("✅ Connecting to MongoDB...");
+const { initGemini, verifyGemini } = require('./services/geminiService');
+const { seedResources } = require('./controllers/resourceController');
+const Resource = require('./models/Resource');
 
+// Connect to database and seed if empty
+connectDB().then(async () => {
+  const count = await Resource.countDocuments();
+  if (count === 0) {
+    console.log("🗄️ Database empty, auto-seeding resources...");
+    // Mock req/res for the controller function
+    await seedResources({ query: {} }, { 
+      status: () => ({ json: () => {} }), 
+      json: () => {} 
+    });
+  }
+});
 
-// Connect to database
-connectDB();
-
-// Initialize Gemini AI
+// Initialize and Verify Gemini AI
 initGemini();
+verifyGemini();
 
 const app = express();
 

@@ -9,7 +9,11 @@ const getHeaders = () => {
 
 const handleResponse = async (res) => {
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'API error');
+  if (!res.ok) {
+    // If it's an AI error, try to extract the specific message
+    const errorMsg = data.message || data.error || 'Server error';
+    throw new Error(errorMsg);
+  }
   return data;
 };
 
@@ -107,6 +111,15 @@ export const aiAPI = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ question, answer, subject, maxMarks }),
+    });
+    return handleResponse(res);
+  },
+
+  generateFlashcards: async (topic, subject, count = 10) => {
+    const res = await fetch(`${API_BASE}/ai/generate-flashcards`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ topic, subject, count }),
     });
     return handleResponse(res);
   },

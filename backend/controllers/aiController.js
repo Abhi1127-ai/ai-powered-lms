@@ -111,4 +111,31 @@ const gradeAnswer = async (req, res) => {
   }
 };
 
-module.exports = { askDoubt, getSummary, getQuiz, gradeAnswer };
+// @desc    Generate Flashcards
+// @route   POST /api/ai/generate-flashcards
+const getFlashcards = async (req, res) => {
+  try {
+    const { topic, subject, count } = req.body;
+    if (!topic || !subject) {
+      return res.status(400).json({ message: 'Topic and subject are required' });
+    }
+
+    const cards = await gemini.generateFlashcards(topic, subject, count || 10);
+
+    await AILog.create({
+      userId: req.user._id,
+      type: 'flashcards',
+      prompt: `${topic} — ${subject}`,
+      response: cards,
+      subject,
+      topic,
+    });
+
+    res.json({ cards });
+  } catch (error) {
+    console.error('Flashcard error:', error);
+    res.status(500).json({ message: 'AI service error', error: error.message });
+  }
+};
+
+module.exports = { askDoubt, getSummary, getQuiz, gradeAnswer, getFlashcards };

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { generateStudyPlan } = require('../services/geminiService');
 
 const SUBJECTS = {
   '10': ['Mathematics', 'Science', 'Social Science', 'English', 'Hindi'],
@@ -133,30 +134,15 @@ const updateProgress = async (req, res) => {
 const getDailyGoals = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    const subjects = SUBJECTS[user.studentClass] || SUBJECTS['12'];
+    const progress = Object.fromEntries(user.progress || new Map());
+    
+    // Call Gemini to generate a personalized plan
+    const aiPlan = await generateStudyPlan(user.studentClass, user.board, progress);
 
-    // Find subjects with lowest progress → suggest those first
-    const progressArr = subjects.map((sub) => ({
-      subject: sub,
-      percent: user.progress?.get(sub) || 0,
-    }));
-    progressArr.sort((a, b) => a.percent - b.percent);
-
-    const goals = progressArr.slice(0, 3).map((s) => {
-      const chapters = CHAPTERS[s.subject] || [];
-      const chapterIndex = Math.floor((s.percent / 100) * chapters.length);
-      const chapter = chapters[chapterIndex] || chapters[0] || 'Revision';
-      return {
-        subject: s.subject,
-        chapter,
-        currentProgress: s.percent,
-        task: `Study "${chapter}" in ${s.subject}`,
-      };
-    });
-
-    res.json({ goals });
+    res.json(aiPlan);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Study Plan Error:', error);
+    res.status(500).json({ message: 'Server error generating study plan' });
   }
 };
 

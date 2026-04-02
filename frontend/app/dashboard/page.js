@@ -44,14 +44,17 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [data, setData] = useState(null);
-  const [goals, setGoals] = useState([]);
+  const [aiPlan, setAiPlan] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) { router.push('/login'); return; }
     if (user) {
       Promise.all([dashboardAPI.getProgress(), dashboardAPI.getDailyGoals()])
-        .then(([prog, g]) => { setData(prog); setGoals(g.goals || []); })
+        .then(([prog, plan]) => { 
+          setData(prog); 
+          setAiPlan(plan); 
+        })
         .catch(console.error)
         .finally(() => setLoading(false));
     }
@@ -69,19 +72,27 @@ export default function DashboardPage() {
   }
 
   const totalProgress = data?.subjects?.length
-    ? Math.round(Object.values(data.progress).reduce((a, b) => a + b, 0) / data.subjects.length)
+    ? Math.round(Object.values(data.progress || {}).reduce((a, b) => a + (b || 0), 0) / data.subjects.length)
     : 0;
 
   return (
     <div style={{ padding: '40px 24px 80px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <div className="animate-fade-in" style={{ marginBottom: '36px' }}>
-        <h1 style={{ fontSize: '32px', fontWeight: 800 }}>
-          Welcome back, <span className="gradient-text">{data?.name}</span> 👋
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px' }}>
-          Class {data?.studentClass} • {data?.board} Board
-        </p>
+      <div className="animate-fade-in" style={{ marginBottom: '36px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '32px', fontWeight: 800 }}>
+            Welcome back, <span className="gradient-text">{data?.name}</span> 👋
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', marginTop: '6px' }}>
+            Class {data?.studentClass} • {data?.board} Board
+          </p>
+        </div>
+        {aiPlan?.dailyMantra && (
+          <div className="glass-card" style={{ padding: '12px 20px', maxWidth: '400px', borderLeft: '3px solid #8b5cf6' }}>
+            <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#8b5cf6', fontWeight: 700, marginBottom: '4px' }}>✨ Daily Mantra</div>
+            <div style={{ fontSize: '14px', fontStyle: 'italic', color: 'white' }}>&ldquo;{aiPlan.dailyMantra}&rdquo;</div>
+          </div>
+        )}
       </div>
 
       {/* Stats Row */}
@@ -114,28 +125,67 @@ export default function DashboardPage() {
       </div>
 
       {/* Daily Goals */}
-      {goals.length > 0 && (
+      {aiPlan?.goals?.length > 0 && (
         <div style={{ marginBottom: '36px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 700, marginBottom: '16px' }}>
-            🎯 Today&apos;s Study Goals
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: 700 }}>
+              🎯 Today&apos;s AI Study Plan
+            </h2>
+          </div>
           <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
-            {goals.map((g, i) => (
+            {aiPlan.goals.map((g, i) => (
               <div key={i} className="glass-card" style={{
                 padding: '20px 24px',
-                flex: '1 1 280px',
-                borderLeft: `3px solid ${subjectColors[g.subject] || '#6366f1'}`,
+                flex: '1 1 300px',
+                borderLeft: `4px solid ${subjectColors[g.subject] || '#6366f1'}`,
               }}>
-                <div style={{ fontSize: '13px', color: subjectColors[g.subject] || '#6366f1', fontWeight: 600, marginBottom: '6px' }}>
-                  {subjectIcons[g.subject]} {g.subject}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', color: subjectColors[g.subject] || '#6366f1', fontWeight: 700 }}>
+                    {subjectIcons[g.subject]} {g.subject.toUpperCase()}
+                  </div>
+                  <div style={{ 
+                    fontSize: '11px', 
+                    padding: '2px 8px', 
+                    borderRadius: '10px', 
+                    background: g.priority === 'High' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
+                    color: g.priority === 'High' ? '#fca5a5' : '#fcd34d',
+                    fontWeight: 700
+                  }}>
+                    {g.priority} Priority
+                  </div>
                 </div>
-                <div style={{ fontSize: '16px', fontWeight: 600 }}>{g.chapter}</div>
-                <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginTop: '6px' }}>
-                  Current: {g.currentProgress}% complete
+                <div style={{ fontSize: '17px', fontWeight: 700, marginBottom: '4px' }}>{g.chapter}</div>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>{g.task}</div>
+                <div style={{ 
+                  fontSize: '13px', 
+                  color: 'rgba(255,255,255,0.4)', 
+                  padding: '8px', 
+                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: '8px'
+                }}>
+                  💡 {g.why}
                 </div>
               </div>
             ))}
           </div>
+          {aiPlan?.proTip && (
+            <div style={{ 
+              marginTop: '20px', 
+              padding: '16px', 
+              borderRadius: '12px', 
+              background: 'linear-gradient(90deg, rgba(6,182,212,0.1), transparent)',
+              border: '1px solid rgba(6,182,212,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <span style={{ fontSize: '24px' }}>🛡️</span>
+              <div>
+                <div style={{ fontSize: '12px', textTransform: 'uppercase', color: '#06b6d4', fontWeight: 700 }}>Pro Strategy</div>
+                <div style={{ fontSize: '15px', color: 'white' }}>{aiPlan.proTip}</div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
