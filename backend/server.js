@@ -1,4 +1,7 @@
 require('dotenv').config();
+console.log("--- ENV CHECK ---");
+console.log("Key starts with:", process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 7) : "NOT FOUND");
+console.log("-----------------");
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
