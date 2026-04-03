@@ -9,7 +9,7 @@ const aiLogSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['doubt', 'summary', 'quiz', 'grade'],
+      enum: ['doubt', 'summary', 'quiz', 'grade', 'flashcards', 'studyplan'],
       required: true,
     },
     prompt: {

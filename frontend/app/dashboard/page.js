@@ -138,7 +138,13 @@ export default function DashboardPage() {
                 padding: '20px 24px',
                 flex: '1 1 300px',
                 borderLeft: `4px solid ${subjectColors[g.subject] || '#6366f1'}`,
-              }}>
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+              }}
+              onClick={() => router.push(`/summary?subject=${encodeURIComponent(g.subject)}&chapter=${encodeURIComponent(g.chapter)}`)}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <div style={{ fontSize: '13px', color: subjectColors[g.subject] || '#6366f1', fontWeight: 700 }}>
                     {subjectIcons[g.subject]} {g.subject.toUpperCase()}
