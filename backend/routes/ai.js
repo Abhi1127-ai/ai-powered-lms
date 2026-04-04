@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { askDoubt, getSummary, getQuiz, gradeAnswer, getFlashcards } = require('../controllers/aiController');
-const { protect } = require('../middleware/auth');
+const  protect  = require('../middleware/auth');
 
 router.post('/doubt', protect, askDoubt);
 router.post('/summary', protect, getSummary);

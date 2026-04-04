@@ -7,7 +7,7 @@ const {
   getChapters,
   getLeaderboard,
 } = require('../controllers/dashboardController');
-const { protect } = require('../middleware/auth');
+const  protect  = require('../middleware/auth');
 
 router.get('/progress', protect, getProgress);
 router.post('/update-progress', protect, updateProgress);

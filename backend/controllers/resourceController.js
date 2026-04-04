@@ -4,15 +4,19 @@ const Resource = require('../models/Resource');
 // @route   GET /api/resources/pyqs
 const getPYQs = async (req, res) => {
   try {
-    const { subject, chapter, year, studentClass } = req.query;
-    const filter = { type: 'pyq' };
+    const { subject, studentClass } = req.query;
+
+    const filter = { type: 'pyq', paperType: 'full' };
+
     if (subject) filter.subject = subject;
-    if (chapter) filter.chapter = chapter;
-    if (year) filter.year = Number(year);
     if (studentClass) filter.studentClass = studentClass;
 
-    const pyqs = await Resource.find(filter).sort({ year: -1 });
+    const pyqs = await Resource.find(filter)
+      .select('title year subject fileUrl')
+      .sort({ year: -1 });
+
     res.json({ pyqs });
+
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

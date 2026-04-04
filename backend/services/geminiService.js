@@ -252,4 +252,106 @@ const getMockGradeResponse = (question, maxMarks) => ({
   tips: 'Practice writing structured answers with proper headings.',
 });
 
-module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards };
+async function generateNotes(cls, subject, unit) {
+  const prompt = `You are an expert CBSE Class ${cls} ${subject} teacher preparing detailed notes for students.
+
+Generate comprehensive, exam-focused notes for the chapter: "${unit}" (Class ${cls} ${subject}).
+
+Format the notes using Markdown with the following structure:
+# ${unit}
+
+## 📌 Overview
+(2-3 sentence intro about the chapter and its importance)
+
+## 🔑 Key Concepts
+(List all important concepts with brief explanations. Use **bold** for key terms.)
+
+## 📖 Detailed Notes
+(Thorough section-by-section explanation of all topics in the chapter. 
+ Use sub-headings (###), bullet points, and bold for important terms.
+ Include definitions, formulas (written as plain text), and explanations.)
+
+## 📊 Important Formulas & Facts
+(List all formulas and important numerical values/constants in a clean format)
+
+## ✅ Board Exam Tips
+(3-5 specific tips about what CBSE board examiners look for in this chapter)
+
+## 🔁 Quick Revision Points
+(Bullet list of the most important points to remember — ideal for last-minute revision)
+
+Keep the language clear, student-friendly, and exam-focused. 
+Total length should be comprehensive but not padded — aim for thorough coverage of the CBSE syllabus for this chapter.`;
+
+  return await askGroq(prompt);
+}
+
+async function generatePYQs(subject, unit) {
+  if (!client) {
+    return [
+      { question: `Define the key concepts in ${unit}.`, year: '2023', marks: 2, section: 'B', answer: 'Set GROQ_API_KEY for real answers.' },
+    ];
+  }
+
+  const prompt = `You are a CBSE board exam paper setter for ${subject}, chapter: "${unit}".
+
+Generate a mini board exam paper with exactly 8 questions in this JSON array format.
+Return ONLY the JSON array, no explanation, no markdown, no backticks.
+
+[
+  {"section":"A","type":"MCQ","question":"Full MCQ question text?\n(a) Option1\n(b) Option2\n(c) Option3\n(d) Option4","year":"2023","marks":1,"answer":"(c) Option3 — brief reason"},
+  {"section":"A","type":"MCQ","question":"Second MCQ?\n(a) Option1\n(b) Option2\n(c) Option3\n(d) Option4","year":"2022","marks":1,"answer":"(a) Option1 — brief reason"},
+  {"section":"A","type":"Assertion-Reason","question":"Assertion: Statement about ${unit}.\nReason: Explanation of the assertion.","year":"2023","marks":1,"answer":"(a) Both A and R are true and R is correct explanation of A — explanation"},
+  {"section":"B","type":"Short Answer","question":"Short question about ${unit}. (2 marks)","year":"2022","marks":2,"answer":"Detailed 2-mark model answer with key points"},
+  {"section":"B","type":"Short Answer","question":"Another short question. (2 marks)","year":"2021","marks":2,"answer":"Detailed 2-mark model answer"},
+  {"section":"C","type":"Long Answer","question":"Explain in detail with diagram if needed. (3 marks)","year":"2023","marks":3,"answer":"Detailed 3-mark model answer with all key points a student must write"},
+  {"section":"C","type":"Long Answer","question":"Derive or solve problem related to ${unit}. (3 marks)","year":"2022","marks":3,"answer":"Step by step solution with formula and working"},
+  {"section":"D","type":"Case Based","question":"Read the following passage and answer:\n[A 3-line context paragraph about a real-life application of ${unit}]\n(i) Sub-question 1\n(ii) Sub-question 2","year":"2023","marks":4,"answer":"(i) Answer to sub-question 1\n(ii) Answer to sub-question 2"}
+]
+
+Make ALL questions strictly based on CBSE Class 12 ${subject} syllabus for "${unit}". Use realistic years 2019-2024.`;
+
+  const text = await askGroq(prompt);
+  
+  // Try to extract JSON array from response
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      // If parse fails, try cleaning the text
+      try {
+        const cleaned = jsonMatch[0]
+          .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ')
+          .replace(/,\s*]/g, ']')
+          .replace(/,\s*}/g, '}');
+        return JSON.parse(cleaned);
+      } catch (e2) {
+        return [{ section: 'B', type: 'Short Answer', question: `Explain the key concepts of ${unit} in ${subject}.`, year: '2023', marks: 3, answer: 'AI response could not be parsed. Please retry.' }];
+      }
+    }
+  }
+  return [{ section: 'B', type: 'Short Answer', question: `Explain ${unit}.`, year: '2023', marks: 3, answer: 'No response from AI. Please retry.' }];
+}
+
+// ── Video URL Generator ───────────────────────────────────────────────────────
+async function generateVideoURL(subject, unit) {
+  if (!client) {
+    const query = encodeURIComponent(`${subject} ${unit} CBSE Class 12 full chapter explanation`);
+    return `https://www.youtube.com/results?search_query=${query}`;
+  }
+
+  const prompt = `You are helping a Class 12 CBSE student find the best YouTube video to study "${unit}" in ${subject}.
+
+Generate the single best YouTube search query (5-10 words) that would find a high quality, exam-focused video for this topic.
+
+Reply with ONLY the search query text, nothing else. No quotes, no explanation.
+Example format: physics electric charges fields CBSE class 12 one shot`;
+
+  const searchQuery = (await askGroq(prompt)).trim().replace(/["']/g, '');
+  const encoded = encodeURIComponent(searchQuery);
+  return `https://www.youtube.com/results?search_query=${encoded}`;
+}
+
+
+module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards , generateNotes , generatePYQs, generateVideoURL};
