@@ -127,26 +127,29 @@ export const aiAPI = {
 
 // ─── Resources ─────────────────────────────────────────────────────────
 export const resourcesAPI = {
-  getPYQs: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const res = await fetch(`${API_BASE}/resources/pyqs?${params}`, { headers: getHeaders() });
+  getPYQs: async (subject) => {
+    const query = subject ? `?subject=${encodeURIComponent(subject)}` : '';
+    const res = await fetch(`${API_BASE}/resources/pyqs${query}`, { headers: getHeaders() });
     return handleResponse(res);
   },
 
-  getNotes: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const res = await fetch(`${API_BASE}/resources/notes?${params}`, { headers: getHeaders() });
+  getNotes: async (subject) => {
+    const query = subject ? `?subject=${encodeURIComponent(subject)}` : '';
+    const res = await fetch(`${API_BASE}/resources/notes${query}`, { headers: getHeaders() });
     return handleResponse(res);
   },
 
-  getVideos: async (filters = {}) => {
-    const params = new URLSearchParams(filters).toString();
-    const res = await fetch(`${API_BASE}/resources/videos?${params}`, { headers: getHeaders() });
+  getVideos: async (subject) => {
+    const query = subject ? `?subject=${encodeURIComponent(subject)}` : '';
+    const res = await fetch(`${API_BASE}/resources/videos${query}`, { headers: getHeaders() });
     return handleResponse(res);
   },
 
   seed: async () => {
-    const res = await fetch(`${API_BASE}/resources/seed`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/resources/seed`, { 
+      method: 'POST',
+      headers: getHeaders()
+    });
     return handleResponse(res);
   },
 };

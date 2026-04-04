@@ -9,15 +9,16 @@ export default function Navbar() {
 
   const navItems = user
     ? [
-        { href: '/dashboard', label: '📊 Dashboard', icon: '📊' },
-        { href: '/flashcards', label: '🗂️ Flashcards', icon: '🗂️' },
-        { href: '/doubt', label: '🤖 Doubt AI', icon: '🤖' },
-        { href: '/summary', label: '📝 Summary', icon: '📝' },
-        { href: '/quiz', label: '🎯 Quiz', icon: '🎯' },
-        { href: '/grade', label: '✅ Grade', icon: '✅' },
-        { href: '/resources', label: '📚 Resources', icon: '📚' },
-        { href: '/leaderboard', label: '🏆 Board', icon: '🏆' },
-      ]
+      { href: '/dashboard', label: '📊 Dashboard', icon: '📊' },
+      { href: '/flashcards', label: '🗂️ Flashcards', icon: '🗂️' },
+      { href: '/doubt', label: '🤖 Doubt AI', icon: '🤖' },
+      { href: '/summary', label: '📝 Summary', icon: '📝' },
+      { href: '/quiz', label: '🎯 Quiz', icon: '🎯' },
+      { href: '/grade', label: '✅ Grade', icon: '✅' },
+      { href: '/resources', label: '📚 Resources', icon: '📚' },
+      { href: '/notes', label: '📘 Notes', icon: '📘' },
+      { href: '/leaderboard', label: '🏆 Board', icon: '🏆' },
+    ]
     : [];
 
   return (
