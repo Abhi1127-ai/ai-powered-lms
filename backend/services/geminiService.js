@@ -353,5 +353,54 @@ Example format: physics electric charges fields CBSE class 12 one shot`;
   return `https://www.youtube.com/results?search_query=${encoded}`;
 }
 
+async function scanImage(base64, field) {
+  if (!client) {
+    return `[Mock OCR] This is where the scanned ${field} text would appear. Set GROQ_API_KEY for real scanning.`;
+  }
 
-module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards , generateNotes , generatePYQs, generateVideoURL};
+  // Strip the data:image/...;base64, prefix if present
+  const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+  const mimeType = base64.includes('data:') ? base64.split(';')[0].split(':')[1] : 'image/jpeg';
+
+  const prompt = field === 'question'
+    ? `This image contains a board exam question (may be handwritten or printed). 
+Extract and transcribe the complete question text exactly as written. 
+If there are multiple parts (a, b, c), include all of them.
+Return ONLY the question text, nothing else.`
+    : `This image contains a student's handwritten answer to a board exam question.
+Extract and transcribe the complete answer text exactly as written.
+Preserve paragraph breaks and numbered/bulleted points.
+Return ONLY the answer text, nothing else.`;
+
+  try {
+    const response = await client.chat.completions.create({
+      model: 'llama-3.2-11b-vision-preview',
+      max_tokens: 2000,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType};base64,${base64Data}`,
+              },
+            },
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
+    return response.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('Vision model error:', err.message);
+    // Fallback: use text model to acknowledge the image
+    return `[Image uploaded — please type the ${field} text manually or try a clearer image]`;
+  }
+}
+
+
+module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards , generateNotes , generatePYQs, generateVideoURL , scanImage};
