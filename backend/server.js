@@ -11,6 +11,7 @@ const { initGemini, verifyGemini } = require('./services/geminiService');
 const { seedResources } = require('./controllers/resourceController');
 const resourceRoutes = require('./routes/resourceRoutes');
 const notesRoutes = require("./routes/notes");
+const badgesRoutes = require('./routes/badges');
 
 connectDB().then(async () => {
   try {
@@ -49,6 +50,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use("/api/notes", notesRoutes);
+app.use('/api/badges', badgesRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

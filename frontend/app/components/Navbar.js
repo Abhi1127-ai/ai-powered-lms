@@ -18,6 +18,7 @@ export default function Navbar() {
       { href: '/resources', label: '📚 Resources', icon: '📚' },
       { href: '/notes', label: '📘 Notes', icon: '📘' },
       { href: '/leaderboard', label: '🏆 Board', icon: '🏆' },
+      { href: '/badges', label: '🏅 Badges', icon: '🏅' },
     ]
     : [];
 
