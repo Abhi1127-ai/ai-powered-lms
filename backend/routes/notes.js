@@ -8,5 +8,6 @@ router.post("/generate", protect, notesController.generateOrFetchNote);
 router.get("/check", protect, notesController.checkNoteExists);
 router.post("/pyqs", protect, notesController.generatePYQs);
 router.post("/video", protect, notesController.generateVideoURL);
+router.post('/mock-test', protect, notesController.generateMockTest);
 
 module.exports = router;

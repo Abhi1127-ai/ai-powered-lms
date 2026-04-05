@@ -402,5 +402,70 @@ Return ONLY the answer text, nothing else.`;
   }
 }
 
+async function generateMockTest(subject, chapter, difficulty) {
+  if (!client) {
+    return {
+      sectionA: Array(5).fill(null).map((_, i) => ({
+        question: `Sample MCQ ${i + 1} about ${chapter}?`,
+        options: ['(a) Option 1', '(b) Option 2', '(c) Option 3', '(d) Option 4'],
+        correct: 0,
+      })),
+      sectionB: Array(3).fill(null).map((_, i) => ({ question: `Short answer Q${i + 1} about ${chapter}?`, marks: 2 })),
+      sectionC: Array(2).fill(null).map((_, i) => ({ question: `Long answer Q${i + 1} about ${chapter}?`, marks: 5 })),
+    };
+  }
 
-module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards , generateNotes , generatePYQs, generateVideoURL , scanImage};
+  const difficultyNote = difficulty === 'easy'
+    ? 'basic level, definitions and simple recall'
+    : difficulty === 'hard'
+    ? 'board exam level, application and derivations'
+    : 'moderate level, understanding and application';
+
+  const prompt = `You are a CBSE Class 12 ${subject} paper setter.
+Generate a mini board exam paper for chapter: "${chapter}" at ${difficulty} difficulty (${difficultyNote}).
+
+Return ONLY a valid JSON object, no extra text:
+{
+  "sectionA": [
+    {"question": "MCQ question text?", "options": ["(a) opt1", "(b) opt2", "(c) opt3", "(d) opt4"], "correct": 0},
+    {"question": "MCQ question text?", "options": ["(a) opt1", "(b) opt2", "(c) opt3", "(d) opt4"], "correct": 2},
+    {"question": "MCQ question text?", "options": ["(a) opt1", "(b) opt2", "(c) opt3", "(d) opt4"], "correct": 1},
+    {"question": "MCQ question text?", "options": ["(a) opt1", "(b) opt2", "(c) opt3", "(d) opt4"], "correct": 3},
+    {"question": "MCQ question text?", "options": ["(a) opt1", "(b) opt2", "(c) opt3", "(d) opt4"], "correct": 0}
+  ],
+  "sectionB": [
+    {"question": "Short answer question 1 about ${chapter}?", "marks": 2},
+    {"question": "Short answer question 2 about ${chapter}?", "marks": 2},
+    {"question": "Short answer question 3 about ${chapter}?", "marks": 2}
+  ],
+  "sectionC": [
+    {"question": "Long answer / derivation question 1 about ${chapter}?", "marks": 5},
+    {"question": "Long answer / numerical question 2 about ${chapter}?", "marks": 5}
+  ]
+}
+
+Rules:
+- correct field is 0-indexed (0=a, 1=b, 2=c, 3=d)
+- All questions must be strictly from CBSE Class 12 ${subject} syllabus for "${chapter}"
+- Section C should include derivation or numerical if applicable`;
+
+  const text = await askGroq(prompt);
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      try {
+        const cleaned = jsonMatch[0].replace(/[\u0000-\u001F]/g, ' ').replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        return JSON.parse(cleaned);
+      } catch (e2) {
+        throw new Error('Could not parse AI response');
+      }
+    }
+  }
+  throw new Error('No valid response from AI');
+}
+
+
+
+module.exports = { initGemini, verifyGemini, askDoubt, generateSummary, generateQuiz, gradeAnswer, generateStudyPlan, generateFlashcards , generateNotes , generatePYQs, generateVideoURL , scanImage , generateMockTest};

@@ -74,3 +74,16 @@ exports.generateVideoURL = async (req, res) => {
         res.status(500).json({ message: "Failed to get video. Please try again." });
     }
 };
+
+exports.generateMockTest = async (req, res) => {
+    try {
+        const { subject, chapter, difficulty } = req.body;
+        if (!subject || !chapter) return res.status(400).json({ message: 'subject and chapter are required' });
+        const { generateMockTest } = require('../services/geminiService');
+        const paper = await generateMockTest(subject, chapter, difficulty || 'medium');
+        res.json({ paper });
+    } catch (err) {
+        console.error('Mock test error:', err);
+        res.status(500).json({ message: 'Failed to generate paper. Please try again.' });
+    }
+};
