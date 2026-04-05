@@ -6,6 +6,44 @@ import { useRouter } from 'next/navigation';
 
 const subjects = ['Physics', 'Chemistry', 'Mathematics', 'Biology', 'Science', 'English'];
 
+// ── Image Upload Button ───────────────────────────────────────────────────────
+function ImageUploadBox({ onImage, scanning }) {
+  const inputRef = useRef();
+
+  function handleFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => onImage(e.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => inputRef.current.click()}
+        disabled={scanning}
+        title="Upload question image"
+        style={{
+          width: '46px', height: '46px', borderRadius: '12px', border: 'none',
+          background: scanning ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.08)',
+          color: '#fff', fontSize: '18px',
+          cursor: scanning ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.2s',
+        }}
+      >
+        {scanning ? '⏳' : '📎'}
+      </button>
+      <input
+        ref={inputRef} type="file" accept="image/*"
+        style={{ display: 'none' }}
+        onChange={(e) => handleFile(e.target.files[0])}
+      />
+    </>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function DoubtPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -15,10 +53,13 @@ export default function DoubtPage() {
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  // ── Voice state ────────────────────────────────────────────────────────────
+  // ── Voice state ──────────────────────────────────────────────────────────
   const [listening, setListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const recognitionRef = useRef(null);
+
+  // ── Image scan state ─────────────────────────────────────────────────────
+  const [scanningImage, setScanningImage] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
@@ -28,67 +69,71 @@ export default function DoubtPage() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Check browser support
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) setVoiceSupported(true);
   }, []);
 
-  // ── Voice handler ──────────────────────────────────────────────────────────
+  // ── Voice handler ────────────────────────────────────────────────────────
   const toggleVoice = () => {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) return;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-  if (listening) {
-    recognitionRef.current?.stop();
-    setListening(false);
-    return;
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-IN';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    let finalTranscript = '';
+
+    recognition.onstart = () => { setListening(true); finalTranscript = ''; };
+
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
+        else interim += e.results[i][0].transcript;
+      }
+      setInput(finalTranscript + interim);
+    };
+
+    recognition.onerror = (e) => { console.log('Speech error:', e.error); setListening(false); };
+    recognition.onend = () => {
+      setListening(false);
+      if (finalTranscript.trim()) handleSendText(finalTranscript.trim());
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  // ── Image upload handler ─────────────────────────────────────────────────
+  async function handleImageUpload(base64) {
+    setScanningImage(true);
+    try {
+      const token = localStorage.getItem('lms_token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/scan-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ image: base64, field: 'question' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.text) setInput(data.text);
+    } catch (err) {
+      console.error('Image scan error:', err);
+    } finally {
+      setScanningImage(false);
+    }
   }
 
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'en-IN';        // en-IN works better than hi-IN for Hinglish
-  recognition.interimResults = true; // show partial results while speaking
-  recognition.continuous = true;     // don't stop after first pause
-  recognition.maxAlternatives = 1;
-
-  let finalTranscript = '';
-
-  recognition.onstart = () => {
-    setListening(true);
-    finalTranscript = '';
-  };
-
-  recognition.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        finalTranscript += e.results[i][0].transcript;
-      } else {
-        interim += e.results[i][0].transcript;
-      }
-    }
-    // Show live transcript in input box while speaking
-    setInput(finalTranscript + interim);
-  };
-
-  recognition.onerror = (e) => {
-    console.log('Speech error:', e.error);
-    setListening(false);
-  };
-
-  recognition.onend = () => {
-    setListening(false);
-    // Auto-send only if we got something
-    if (finalTranscript.trim()) {
-      handleSendText(finalTranscript.trim());
-    }
-  };
-
-  recognitionRef.current = recognition;
-  recognition.start();
-};
-
-  // ── Send (accepts optional text override for voice) ────────────────────────
+  // ── Send ─────────────────────────────────────────────────────────────────
   const handleSendText = async (text) => {
     const question = (text || input).trim();
     if (!question || loading) return;
@@ -99,10 +144,8 @@ export default function DoubtPage() {
     try {
       const data = await aiAPI.askDoubt(question, subject);
       setMessages((prev) => [...prev, { role: 'ai', text: data.answer }]);
-
-      // Award badge for first doubt
       awardBadge('first_doubt');
-      if (messages.length >= 9) awardBadge('curious_mind'); // 5 doubts
+      if (messages.length >= 9) awardBadge('curious_mind');
     } catch (err) {
       setMessages((prev) => [...prev, { role: 'ai', text: `❌ Error: ${err.message}` }]);
     } finally {
@@ -112,7 +155,7 @@ export default function DoubtPage() {
 
   const handleSend = () => handleSendText(input);
 
-  // ── Badge award (fire and forget) ─────────────────────────────────────────
+  // ── Badge award ──────────────────────────────────────────────────────────
   const awardBadge = async (badgeId) => {
     try {
       const token = localStorage.getItem('lms_token');
@@ -174,22 +217,24 @@ export default function DoubtPage() {
             </p>
             {voiceSupported && (
               <p style={{ fontSize: '13px', marginTop: '6px', color: '#a5b4fc' }}>
-                🎙️ Or press the mic button and speak your doubt!
+                🎙️ Speak your doubt or 📎 upload a question image!
               </p>
             )}
           </div>
         )}
         {messages.map((msg, i) => (
           <div key={i} className={msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'} style={{ whiteSpace: 'pre-wrap' }}>
-            {msg.role === 'user' && msg.voice && (
-              <span style={{ fontSize: '11px', opacity: 0.6, marginRight: '6px' }}>🎙️</span>
-            )}
             {msg.text}
           </div>
         ))}
         {loading && (
           <div className="chat-bubble-ai">
             <span style={{ display: 'inline-block', animation: 'flicker 1s infinite' }}>🤔 Thinking...</span>
+          </div>
+        )}
+        {scanningImage && (
+          <div className="chat-bubble-ai">
+            <span>🔍 Scanning your image...</span>
           </div>
         )}
         <div ref={chatEndRef} />
@@ -200,11 +245,15 @@ export default function DoubtPage() {
         <input
           type="text"
           className="input-field"
-          placeholder={listening ? '🎙️ Listening... speak now' : `Ask a ${subject} doubt...`}
+          placeholder={
+            listening ? '🎙️ Listening... speak now'
+            : scanningImage ? '🔍 Scanning image...'
+            : `Ask a ${subject} doubt...`
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-          disabled={loading || listening}
+          disabled={loading || listening || scanningImage}
           style={{
             flex: 1,
             border: listening ? '1.5px solid #ef4444' : undefined,
@@ -212,15 +261,18 @@ export default function DoubtPage() {
           }}
         />
 
+        {/* Image Upload Button */}
+        <ImageUploadBox onImage={handleImageUpload} scanning={scanningImage} />
+
         {/* Mic Button */}
         {voiceSupported && (
           <button
             onClick={toggleVoice}
-            disabled={loading}
+            disabled={loading || scanningImage}
             title={listening ? 'Stop listening' : 'Speak your doubt'}
             style={{
               width: '46px', height: '46px', borderRadius: '12px', border: 'none',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: (loading || scanningImage) ? 'not-allowed' : 'pointer',
               background: listening
                 ? 'linear-gradient(135deg, #ef4444, #dc2626)'
                 : 'rgba(255,255,255,0.08)',
@@ -238,7 +290,7 @@ export default function DoubtPage() {
         <button
           onClick={handleSend}
           className="btn-primary"
-          disabled={loading || !input.trim() || listening}
+          disabled={loading || !input.trim() || listening || scanningImage}
           style={{ padding: '12px 24px', whiteSpace: 'nowrap' }}
         >
           {loading ? '⏳' : '🚀 Ask'}
@@ -248,11 +300,11 @@ export default function DoubtPage() {
       {/* Listening indicator */}
       {listening && (
         <div style={{
-          marginTop: '10px', textAlign: 'center',
-          color: '#ef4444', fontSize: '13px', fontWeight: 600,
+          marginTop: '10px', textAlign: 'center', color: '#ef4444',
+          fontSize: '13px', fontWeight: 600,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
         }}>
-          <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1s ease-in-out infinite' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse 1s ease-in-out infinite' }} />
           Listening... speak your doubt in Hindi or English
           <style>{`@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.1)}}`}</style>
         </div>
